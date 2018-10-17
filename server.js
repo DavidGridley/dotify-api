@@ -144,6 +144,53 @@ app.post("/api/artists", function(req, res) {
       .catch(error => res.status(400).json({error: error.message}))
   })
 
+  app.patch('/artists/:id', function(req, res) {
+      const artist_id = req.params.id;
+      let arguments = Object.keys(req.body);
+      arguments=arguments.concat(Object.values(req.body));
+      arguments.push(parseInt(artist_id));
+      console.log(arguments);
+      if (arguments.length === 3) {
+          db.none(
+            `UPDATE artist SET $1:name = $2 WHERE id=$3`, arguments
+          )
+          .then(response => res.json(response))
+          .catch(error => {
+              res.status(400).send()
+          })
+      } else if (arguments.length === 5) {
+        db.none(
+            `UPDATE artist SET $1:name = $3, $2:name = $4 WHERE id= $5`, arguments
+          )
+          .then(response => res.json(response))
+          .catch(error => {
+            res.status(400).send()
+          })
+      }
+  })
+
+app.patch("/playlists/:id", (req,res) => {
+    const playlist_id = req.params.id;
+    const {name} =req.body;
+    db.none(
+        `UPDATE playlist SET name=$1 where id=$2`,[name,playlist_id]
+    )
+    .then(response => res.json({update:"successful"}))
+    .catch(error=> res.status(400).send())
+})
+
+app.delete("/song/:id", (req, res) => {
+    const song_id = req.params.id;
+    db.none(
+        `DELETE FROM song_playlist WHERE song_id=$1`, [song_id]
+    )
+    .then(data => {
+        db.none(
+            `DELETE FROM song WHERE id=$1`, [song_id]
+        )
+    })
+})
+
 app.listen(8080, function() {
   console.log("Listening on port 8080!");
 });
