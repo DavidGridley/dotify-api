@@ -52,7 +52,6 @@ app.post("/api/songs", function(req, res) {
             `, [data.id]
         )
         .then(data=> res.json(data))
-      
     })
     
     .catch(error => {
@@ -188,7 +187,33 @@ app.delete("/song/:id", (req, res) => {
         db.none(
             `DELETE FROM song WHERE id=$1`, [song_id]
         )
+        .then(response => res.status(204).send())
     })
+    .catch(error => res.status(400).send())
+})
+
+app.delete("/artist/:id", (req, res)=> {
+    const artist_id = req.params.id;
+    db.none(
+        `DELETE from song_playlist 
+        WHERE song_id in (
+            SELECT id from song
+            WHERE artist_id=$1
+        )
+        `,[artist_id]
+    )
+    .then(data => {
+        db.none(
+            `DELETE from song where artist_id= $1`,[artist_id]
+        )
+        .then(data => {
+            db.none(
+                `DELETE from artist where id = $1`,[artist_id]
+            )
+            .then(response => res.status(204).send())
+        })
+    })
+    .catch(error => res.status(400).send())
 })
 
 app.listen(8080, function() {
